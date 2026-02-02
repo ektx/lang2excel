@@ -23,5 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-data/*
-lang/*
+exportExcel/*
+exportLang/*
+importExcel/*
+importLang/*
+

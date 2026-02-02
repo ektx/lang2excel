@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "convert": "tsx src/node-cli.ts"
+    "convert": "tsx src/node-cli.ts",
+    "import": "tsx src/import-cli.ts"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

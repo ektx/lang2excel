@@ -8,8 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function run() {
-  const langDir = path.join(process.cwd(), 'lang');
-  const dataDir = path.join(process.cwd(), 'data');
+  const langDir = path.join(process.cwd(), 'importLang');
+  const dataDir = path.join(process.cwd(), 'exportExcel');
 
   if (!fs.existsSync(langDir)) {
     console.error(`Error: 'lang' directory not found at ${langDir}`);
