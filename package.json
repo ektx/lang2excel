@@ -1,0 +1,19 @@
+{
+  "name": "lang2excel",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "convert": "tsx src/node-cli.ts"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "lodash-es": "^4.17.23"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^24.10.1",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3"
+  }
+}
