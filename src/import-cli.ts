@@ -41,13 +41,16 @@ async function run() {
         
         // 1. Generate individual TS files for each top-level key
         topLevelKeys.forEach(key => {
-          const content = `export default ${JSON.stringify(langData[key], null, 2)};\n`;
+          const jsonStr = JSON.stringify(langData[key], null, 2);
+          // Remove quotes from keys that are valid identifiers
+          const formattedJson = jsonStr.replace(/^(\s*)"(\w+)":/gm, '$1$2:');
+          const content = `export const ${key} = ${formattedJson};\n`;
           fs.writeFileSync(path.join(langPath, `${key}.ts`), content);
         });
 
         // 2. Generate index.ts that imports all these files
         const imports = topLevelKeys
-          .map(key => `import ${key} from './${key}.js';`)
+          .map(key => `import { ${key} } from './${key}.js';`)
           .join('\n');
         
         const exportDefault = `export default {\n  ${topLevelKeys.join(',\n  ')}\n};\n`;
