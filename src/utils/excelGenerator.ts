@@ -2,7 +2,8 @@ import ExcelJS from 'exceljs';
 
 export interface ExcelDataRow {
   key: string;
-  [lang: string]: string;
+  isNew?: boolean;
+  [lang: string]: any;
 }
 
 export async function generateExcel(
@@ -14,7 +15,7 @@ export async function generateExcel(
   const workbook = new ExcelJS.Workbook();
   const headerNames = ['key', ...languages];
 
-  // 1. Create Summary Sheet first
+  // 1. 先创建汇总统计表
   const summarySheet = workbook.addWorksheet('汇总统计');
   const summaryColumns = [
     { header: '工作表名', key: 'name', width: 30 },
@@ -22,24 +23,24 @@ export async function generateExcel(
   ];
   summarySheet.columns = summaryColumns;
   
-  // Freeze first row of summary
+  // 冻结汇总表首行
   summarySheet.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
 
-  // 2. Prepare Translation Sheets
+  // 2. 准备各语言翻译表
   const sheetsInfo: { name: string, langCounts: Record<string, number> }[] = [];
   
   for (const [sheetName, rows] of Object.entries(dataByFile)) {
-    // We use a stable name for formula referencing
+    // 使用稳定的名称进行公式引用
     const safeSheetName = sheetName.substring(0, 31).replace(/[\\*?:/\[\]]/g, '_');
     const ws = workbook.addWorksheet(safeSheetName);
     
-    // Calculate counts per language for this sheet
+    // 计算该表每种语言的数量
     const langCounts: Record<string, number> = {};
     languages.forEach(lang => {
       langCounts[lang] = rows.filter(r => r[lang] && String(r[lang]).trim() !== '').length;
     });
 
-    // Set columns with auto-width logic
+    // 设置列，包含自动宽度逻辑
     ws.columns = headerNames.map((h, colIdx) => {
       let maxLen = h.length;
       rows.forEach(row => {
@@ -53,16 +54,30 @@ export async function generateExcel(
       };
     });
 
-    // Add rows
-    ws.addRows(rows);
+    // 添加行数据
+    rows.forEach(rowData => {
+      const row = ws.addRow(rowData);
+      if (rowData.isNew) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFC6EFCE' } // 浅绿色背景
+          };
+          cell.font = {
+            color: { argb: 'FF006100' } // 深绿色文字
+          };
+        });
+      }
+    });
 
-    // Freeze first row
+    // 冻结首行
     ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
 
     sheetsInfo.push({ name: safeSheetName, langCounts });
   }
 
-  // 3. Fill Summary Sheet with data and formulas
+  // 3. 在汇总表中填充数据和公式
   sheetsInfo.forEach((info) => {
     const rowData: any = { name: info.name };
     languages.forEach(lang => {
@@ -71,17 +86,17 @@ export async function generateExcel(
 
     const row = summarySheet.addRow(rowData);
 
-    // Check if all language counts are the same
+    // 检查所有语言的数量是否一致
     const counts = languages.map(lang => info.langCounts[lang]);
     const allSame = counts.every(c => c === counts[0]);
 
-    // Set formulas and styling
+    // 设置公式和样式
     languages.forEach((lang, index) => {
-      const colIdx = index + 2; // +1 for 1-based, +1 for name column
+      const colIdx = index + 2; // +1 因为是 1-based, +1 因为第一列是名称
       const cell = row.getCell(colIdx);
       
-      // Get the column letter for this language in the detail sheet
-      // 'key' is A, first lang is B, etc.
+      // 获取该语言在明细表中的列字母
+      // 'key' 是 A, 第一个语言是 B, 依此类推
       const detailColLetter = String.fromCharCode(66 + index); 
       
       cell.value = {
@@ -91,16 +106,16 @@ export async function generateExcel(
     });
   });
 
-  // 4. Add Dynamic Conditional Formatting to Summary Sheet
-  // This will monitor the counts and highlight in red if they differ
+  // 4. 为汇总表添加动态条件格式
+  // 监控数量并在不一致时标记为红色
   if (sheetsInfo.length > 0 && languages.length > 1) {
     const startRow = 2;
     const endRow = sheetsInfo.length + 1;
     const startColLetter = 'B';
     const endColLetter = String.fromCharCode(65 + languages.length + 1);
     
-    // Formula to check if MAX count in row is not equal to MIN count in row
-    // e.g., MAX($B2:$C2)<>MIN($B2:$C2)
+    // 检查行内最大值和最小值是否不等的公式
+    // 例如：MAX($B2:$C2)<>MIN($B2:$C2)
     const rangeRef = `${startColLetter}${startRow}:${endColLetter}${endRow}`;
     const formulaRange = `$${startColLetter}2:$${endColLetter}2`;
 
@@ -117,7 +132,7 @@ export async function generateExcel(
               bgColor: { argb: 'FFFFC7CE' } 
             },
             font: {
-              color: { argb: 'FF9C0006' } // Dark red text
+              color: { argb: 'FF9C0006' } // 深红色文字
             }
           }
         }
@@ -125,6 +140,6 @@ export async function generateExcel(
     });
   }
 
-  // Write file
+  // 写入文件
   await workbook.xlsx.writeFile(outputPath);
 }
