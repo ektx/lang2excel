@@ -33,6 +33,12 @@ export async function generateExcel(
     // 使用稳定的名称进行公式引用
     const safeSheetName = sheetName.substring(0, 31).replace(/[\\*?:/\[\]]/g, '_');
     const ws = workbook.addWorksheet(safeSheetName);
+
+    // 如果该工作表包含新翻译，则为工作表标签设置绿色背景
+    const hasNewItems = rows.some(r => r.isNew);
+    if (hasNewItems) {
+      ws.properties.tabColor = { argb: 'FFC6EFCE' }; // 浅绿色
+    }
     
     // 计算该表每种语言的数量
     const langCounts: Record<string, number> = {};
