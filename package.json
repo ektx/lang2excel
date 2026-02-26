@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "convert": "tsx src/node-cli.ts",
-    "import": "tsx src/import-cli.ts"
+    "import": "tsx src/import-cli.ts",
+    "merge": "tsx src/merge-cli.ts"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
