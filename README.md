@@ -66,6 +66,18 @@ npm run convert
 
 执行完成后，生成的 Excel 文件将保存在 `exportExcel` 目录下，文件名格式为 `i18n_export_YYYY-MM-DD...xlsx`。
 
+### 4. 合并翻译
+
+运行以下命令执行智能合并（将 `exportLang` 的翻译增量合并到 `importLang/new` 中，并输出到 `importLang/merge`）：
+
+```bash
+npm run merge
+```
+
+执行完成后：
+- 合并后的文件输出到 `importLang/merge/<lang>/`
+- 冲突日志输出到 `importLang/merge/merge-conflicts.log`
+
 ## 📊 输出说明
 
 ### 汇总统计页 (Summary)
@@ -77,11 +89,33 @@ npm run convert
 - 每行代表一个翻译项。
 - **绿色背景**：如果该 Key 在 `old` 文件夹中不存在，则该行会标记为绿色。
 
+## 🧩 合并规则与说明
+
+- 输入目录
+  - 源数据：`exportLang/<lang>/index.ts`
+  - 目标数据：`importLang/new/<lang>/index.ts`
+- 输出目录
+  - 合并结果：`importLang/merge/<lang>/`
+  - 冲突日志：`importLang/merge/merge-conflicts.log`
+- 语言与模块匹配
+  - 以 `importLang/new/<lang>/index.ts` 中存在的语言与顶层模块为准（如 `normal`, `login`）
+  - 仅对这些同名模块进行合并，保持模块边界稳定，不会新增额外模块
+- 字段级增量更新
+  - 保留 `new` 的原有结构与已有字段
+  - 若同一完整 key 在两侧均存在但值不同：优先采用 `exportLang` 的值，并记录到冲突日志
+  - 若 key 仅存在于 `exportLang`：将该字段新增到结果
+  - 若 key 仅存在于 `new`：保持不变
+- 结构保持
+  - 合并后会还原为嵌套对象结构，输出同名 `*.ts` 模块文件，并生成 `index.ts`（使用 `./<module>.js` 的导入约定以与项目现有脚本保持一致）
+- 使用建议
+  - 请确保 `importLang/new/<lang>/index.ts` 存在且声明了顶层模块
+  - 若某语言在 `exportLang` 中不存在，对应语言的合并结果将与 `new` 保持一致，不会产生新增字段
+  - 冲突日志包含语言、模块、完整 key、原值与采用值，便于审计与回溯
+
 ## 🛠️ 技术栈
 
 - **TypeScript**：类型安全的开发体验。
 - **ExcelJS**：强大的 Excel 文件处理库。
 - **lodash-es**：对象处理辅助。
 - **tsx**：直接运行 TypeScript 脚本。
-
 
